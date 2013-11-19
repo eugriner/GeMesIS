@@ -1,2 +1,2 @@
-SMS marketing atráves do celuar do próprio usuário
+SMS marketing atráves do seu celuar
 ---
