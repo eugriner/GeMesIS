@@ -1,2 +1,2 @@
-SMS marketing atráves do seu celuar
+Gerenciador de Medições da Intensidade do Sol
 ---
