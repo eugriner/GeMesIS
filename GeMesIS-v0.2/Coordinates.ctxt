@@ -1,0 +1,23 @@
+#BlueJ class context
+comment0.params=latitude\ longitude
+comment0.target=Coordinates(double,\ double)
+comment0.text=\r\n\ \r\n
+comment1.params=
+comment1.target=Coordinates()
+comment1.text=\r\n\ \r\n
+comment2.params=
+comment2.target=double\ getLatitude()
+comment2.text=\r\n\ \r\n
+comment3.params=
+comment3.target=double\ getLongitude()
+comment3.text=\r\n\ \r\n
+comment4.params=
+comment4.target=org.joda.time.DateTime\ getDate()
+comment4.text=\r\n\ \r\n
+comment5.params=
+comment5.target=org.joda.time.DateTime\ getCurrentTime()
+comment5.text=\r\n\ \r\n
+comment6.params=
+comment6.target=java.lang.String\ toString()
+comment6.text=\r\n\ \r\n
+numComments=7
