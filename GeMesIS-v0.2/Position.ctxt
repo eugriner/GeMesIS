@@ -1,0 +1,26 @@
+#BlueJ class context
+comment0.params=azimuth\ zenith
+comment0.target=Position(double,\ double)
+comment0.text=\r\n\ \r\n
+comment1.params=
+comment1.target=double\ getAzimuth()
+comment1.text=\r\n\ \r\n
+comment2.params=
+comment2.target=double\ getZenith()
+comment2.text=\r\n\ \r\n
+comment3.params=
+comment3.target=Coordinates\ getLocation()
+comment3.text=\r\n\ \r\n
+comment4.params=azimuth
+comment4.target=void\ setAzimuth(double)
+comment4.text=\r\n\ \r\n
+comment5.params=zenith
+comment5.target=void\ setZenith(double)
+comment5.text=\r\n\ \r\n
+comment6.params=location
+comment6.target=void\ setLocation(Coordinates)
+comment6.text=\r\n\ \r\n
+comment7.params=
+comment7.target=java.lang.String\ toString()
+comment7.text=\r\n\ \r\n
+numComments=8
