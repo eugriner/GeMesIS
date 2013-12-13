@@ -23,6 +23,8 @@ public class MyPanel extends JPanel implements ActionListener {
     private JTextField fieldWAITING_TIME_AFTER_FAILURE;
     private JTextField fieldTimeBetweenLogwrite;
     private Core core;
+    private Thread thread;
+    
     public MyPanel() {
         //construct components
         console = new JTextArea (20, 20);
@@ -94,10 +96,6 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldCLOUD_DIFFERENCE.setBounds (15, 395, 200, 25);
         labelLOW_DIFFERENCE_BETWEEN_SENSORS.setBounds (20, 425, 200, 25);
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setBounds (15, 450, 200, 25);
-
-        
-        Thread core = new Thread(new Core());
-        core.start();
         fieldWAITING_TIME_AFTER_FAILURE.setText ("30000");
         fieldTIME_BETWEEN_MESUREMENT.setText ("2000");
         fieldTimeBetweenLogwrite.setText ("180000");
@@ -106,6 +104,9 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldSUN_INTENSITY.setText ("100");
         fieldCLOUD_DIFFERENCE.setText ("200");
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setText ("30");
+        
+        core = new Core();
+        thread = new Thread(core);
     }
     
     // metodo de ouvinte, para tratar os eventos gerados ao clicar um botao
@@ -124,7 +125,7 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldCLOUD_DIFFERENCE.setEnabled (false);
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (false);
             System.out.println(fieldLOW_DIFFERENCE_BETWEEN_SENSORS.getText());
-            core.run();
+            thread.start();
         }
         else
         {
@@ -138,6 +139,7 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldCLOUD_DIFFERENCE.setEnabled (true);
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (true);
             core.stop();
+            thread.interrupt();
         }
     }
    

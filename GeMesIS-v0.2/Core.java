@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import org.joda.time.DateTime;
 import java.io.InterruptedIOException;
 import java.lang.Math;
+import java.lang.Thread;
 
 /**
  * 
@@ -43,13 +44,13 @@ public class Core implements Runnable
     //Numero de sensores
     private volatile int N_SENSORS = 6;
     //Se tiver abaixo desse valor o sensor esta apontado para o sol
-    private volatile int SUN_INTENSITY = 100;
+    private volatile int SUN_INTENSITY = 700;
     //Valor que garante que a luz no sensor central não é difusa
     private volatile int CLOUD_DIFFERENCE = 200;
     //Valor de diferença pequena entre sensores
     private volatile int LOW_DIFFERENCE_BETWEEN_SENSORS = 30;
     //
-    private boolean isOn;
+    private volatile boolean isOn;
     private boolean sunLocated;
     private boolean sunTraked;
 
@@ -98,7 +99,7 @@ public class Core implements Runnable
     {
         isOn = true;
         System.out.println("Start Core!");
-        while(isOn)
+        while(!Thread.currentThread().isInterrupted())
         {
             //primeira execução, ou perdeu e nao re-achou
             if(!sunLocated && !sunTraked)
@@ -139,6 +140,7 @@ public class Core implements Runnable
     public void stop()
     {
         isOn = false;
+        System.out.println(isOn);
     }
     
     /**
@@ -189,70 +191,73 @@ public class Core implements Runnable
                 sV.add(i, sensors.get(i).getMeasurement());
                 //System.out.println(sensorsValues.get(i));
             }
-            //se o sensor do meio for maior faz a medida caso não tenha novem na frente
-            if(sV.get(5) < sV.get(4) && sV.get(5) < sV.get(3) && sV.get(5) < sV.get(2) && sV.get(5) < sV.get(1))
+            if(checkSensorFoundSun() || tried < TIMES_TO_TRY/4)
             {
-                if(sV.get(5) < sV.get(0) - CLOUD_DIFFERENCE)
+                //se o sensor do meio for maior faz a medida caso não tenha novem na frente
+                if(sV.get(5) < sV.get(4) && sV.get(5) < sV.get(3) && sV.get(5) < sV.get(2) && sV.get(5) < sV.get(1))
                 {
-                    //seta a posição do sol que foi encontrado
-                    setSunPosition();
-                    //declara o sol como achado
-                    foundIt = true;
-                    failuresCounter = 0;
-                    System.out.println("Sun was located! - Start Traking");
+                    if(sV.get(5) < sV.get(0) - CLOUD_DIFFERENCE)
+                    {
+                        //seta a posição do sol que foi encontrado
+                        setSunPosition();
+                        //declara o sol como achado
+                        foundIt = true;
+                        failuresCounter = 0;
+                        System.out.println("Sun was located! - Start Traking");
+                    }
+                    else
+                    {
+                        failure();
+                    }
                 }
-                else
+                //
+                else if(sV.get(1) < sV.get(2) && sV.get(1) < sV.get(3) && sV.get(1) < sV.get(4) && sV.get(1) < sV.get(5))
                 {
-                    failure();
+                    if(sV.get(1) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goDown();
+                    else if(sV.get(1) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goClock();
+                    else
+                    {
+                        goDown();
+                        goClock();
+                    }
                 }
-            }
-            //
-            else if(sV.get(1) < sV.get(2) && sV.get(1) < sV.get(3) && sV.get(1) < sV.get(4) && sV.get(1) < sV.get(5))
-            {
-                if(sV.get(1) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goDown();
-                else if(sV.get(1) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goClock();
-                else
+                else if(sV.get(2) < sV.get(1) && sV.get(2) < sV.get(3) && sV.get(2) < sV.get(4) && sV.get(2) < sV.get(5))
                 {
-                    goDown();
-                    goClock();
+                    if(sV.get(2) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goDown();
+                    else if(sV.get(2) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goCounter();
+                    else
+                    {
+                        goDown();
+                        goCounter();
+                    }
                 }
-            }
-            else if(sV.get(2) < sV.get(1) && sV.get(2) < sV.get(3) && sV.get(2) < sV.get(4) && sV.get(2) < sV.get(5))
-            {
-                if(sV.get(2) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goDown();
-                else if(sV.get(2) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goCounter();
-                else
+                else if(sV.get(3) < sV.get(1) && sV.get(3) < sV.get(2) && sV.get(3) < sV.get(4) && sV.get(3) < sV.get(5))
                 {
-                    goDown();
-                    goCounter();
+                    if(sV.get(3) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goCounter();
+                    else if(sV.get(3) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goUp();
+                    else
+                    {
+                        goUp();
+                        goCounter();
+                    }
                 }
-            }
-            else if(sV.get(3) < sV.get(1) && sV.get(3) < sV.get(2) && sV.get(3) < sV.get(4) && sV.get(3) < sV.get(5))
-            {
-                if(sV.get(3) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goCounter();
-                else if(sV.get(3) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goUp();
-                else
+                else if(sV.get(4) < sV.get(1) && sV.get(4) < sV.get(2) && sV.get(4) < sV.get(3) && sV.get(4) < sV.get(5))
                 {
-                    goUp();
-                    goCounter();
-                }
-            }
-            else if(sV.get(4) < sV.get(1) && sV.get(4) < sV.get(2) && sV.get(4) < sV.get(3) && sV.get(4) < sV.get(5))
-            {
-                if(sV.get(4) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goClock();
-                else if(sV.get(4) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                    goUp();
-                else
-                {
-                    goUp();
-                    goClock();
+                    if(sV.get(4) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goClock();
+                    else if(sV.get(4) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                        goUp();
+                    else
+                    {
+                        goUp();
+                        goClock();
+                    }
                 }
             }
             tried++;
@@ -261,7 +266,7 @@ public class Core implements Runnable
         return foundIt;
     }
     
-    private boolean findItAgain()
+    public boolean findItAgain()
     {
         boolean foundIt = false;
         int time = 0;
