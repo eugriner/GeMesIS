@@ -39,7 +39,7 @@ public class Data
     /**
      * 
      */
-    public String dataToString()
+    public String toString()
     {
         //data vai armazenar a String com as informações a serem gravadas no log
         String data;

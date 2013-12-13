@@ -34,7 +34,7 @@ public class Core implements Runnable
     // Limite de passos na vertical
     private volatile int LIMIT_ZENITH = 24;
     // Tempo de espera entre cada comando para os motores em MILLISECONDS
-    private volatile int TIME_WAITING_ENGINE = 1;
+    private volatile int TIME_WAITING_ENGINE = 10;
     
     //Sensores
     //Os sensores seguem esse formato
@@ -62,6 +62,7 @@ public class Core implements Runnable
     private Position lastSunPosition;
     private Coordinates gps;
     private Data firstSunPositionOfDay;
+    private Data data;
     private int failuresCounter;
 
     public Core()
@@ -89,17 +90,17 @@ public class Core implements Runnable
         //Posição que o sol foi "encontrado" da ultima vez
         lastSunPosition = new Position(0,0);
         //contador de falhas
+        ArrayList<Double> sensorsValue = new ArrayList<Double>();
+        data = new Data(sensorsValue, lastSunPosition);
         System.out.println("Core has been created!");
     }
     
     /**
-     * 
+     * Start to look for the Sun and do all mesurment
      */
     public void run()
     {
-        isOn = true;
-        System.out.println("Start Core!");
-        while(!Thread.currentThread().isInterrupted())
+        while(isOn)
         {
             //primeira execução, ou perdeu e nao re-achou
             if(!sunLocated && !sunTraked)
@@ -132,28 +133,39 @@ public class Core implements Runnable
                 sunTraked = false;
             }
         }
+        return;
     }
     
     /**
-     * 
+     * Stops the program
      */
     public void stop()
     {
         isOn = false;
-        System.out.println(isOn);
     }
     
     /**
+     * Start the program
+     */
+    public void start()
+    {
+        isOn = true;
+        run();
+    }
+    
+    /**
+     * Scans the sky trying to find the sun, if find its return true
      * 
+     * @return foundIt
      */
     private boolean lookForSun()
     {
         boolean foundIt = false;
         //começa a fazer a varredura do ceu partindo do 0,0 até que varra o ceu todo ou encontre o sol
-        for(int i = 0; i <= LIMIT_AZIMUTH && !foundIt; i++)
+        for(int i = 0; i <= LIMIT_AZIMUTH && !foundIt && isOn; i++)
         {
             int j = 0;
-            for(; j <= LIMIT_ZENITH && !foundIt; j++)
+            for(; j <= LIMIT_ZENITH && !foundIt && isOn; j++)
             {
                 goTo(i,j);
                 foundIt = checkSensorFoundSun();
@@ -164,7 +176,7 @@ public class Core implements Runnable
                 //Muda o azimuth para começar medir de tras para frente em zenith
                 i++;
                 j--;
-                for(; j >= 0 && !foundIt; j--)
+                for(; j >= 0 && !foundIt && isOn; j--)
                 {
                     goTo(i,j);
                     foundIt = checkSensorFoundSun();
@@ -175,7 +187,9 @@ public class Core implements Runnable
     }
     
     /**
+     * The Sun has been located, start to track the sun, until lose it
      * 
+     * @return foundIt
      */
     public boolean startTrackSun()
     {
@@ -261,11 +275,16 @@ public class Core implements Runnable
                 }
             }
             tried++;
-        } while(!foundIt || tried <= TIMES_TO_TRY);
+        } while(isOn && (!foundIt || tried <= TIMES_TO_TRY));
         //retorna o que será recebido por sunLocated
         return foundIt;
     }
     
+    /**
+     * When loses the Sun try to found it around the last spot
+     * 
+     * @return foundIt
+     */    
     public boolean findItAgain()
     {
         boolean foundIt = false;
@@ -296,13 +315,13 @@ public class Core implements Runnable
             }
             //sai do laço se achar o sol, ou se tentou muito
             time++;
-        } while(!foundIt || (TIMES_TO_TRY/4) > time);
+        } while(isOn && (!foundIt || (TIMES_TO_TRY/4) > time));
         
         return foundIt;
     }
     
     //Método para mover as engines com só um comando e esperar o tempo necessario de cada passo.
-    public void goTo(int azimuth, int zenith)
+    private void goTo(int azimuth, int zenith)
     {
         //calcula a quantidade de passos que vai dar
         azimuth = azimuth - engineA.getPosition();
@@ -322,7 +341,7 @@ public class Core implements Runnable
     }
     
     //movimenta o motor um passo no sentido descrito
-    public void goUp()
+    private void goUp()
     {
         if(engineZ.getPosition() < LIMIT_ZENITH)
         {
@@ -332,7 +351,7 @@ public class Core implements Runnable
     }
         
     //movimenta o motor um passo no sentido descrito
-    public void goDown()
+    private void goDown()
     {
         if(engineZ.getPosition() > 0)
         {
@@ -342,7 +361,7 @@ public class Core implements Runnable
     }
         
     //movimenta o motor um passo no sentido descrito
-    public void goClock()
+    private void goClock()
     {
         if(engineA.getPosition() < LIMIT_AZIMUTH)
         {
@@ -352,7 +371,7 @@ public class Core implements Runnable
     }
         
     //movimenta o motor um passo no sentido descrito
-    public void goCounter()
+    private void goCounter()
     {
         if(engineZ.getPosition() > 0)
         {
@@ -407,7 +426,7 @@ public class Core implements Runnable
     }
     
     /**
-     * 
+     * Return if the sun is lock and the program is traking it
      */
     public boolean isTracking()
     {
@@ -415,11 +434,11 @@ public class Core implements Runnable
     }
     
     /**
-     * 
+     * Write the data inside of the log
      */
     public void colectData()
     {
-        
+        Datalog.writeLog(data.toString());
     }
     
     public int getTIME_BETWEEN_MESUREMENT() {

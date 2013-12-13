@@ -9,6 +9,6 @@ comment2.params=
 comment2.target=Position\ getSunPosition()
 comment2.text=\r\n\ \r\n
 comment3.params=
-comment3.target=java.lang.String\ dataToString()
+comment3.target=java.lang.String\ toString()
 comment3.text=\r\n\ \r\n
 numComments=4

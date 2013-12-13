@@ -27,6 +27,7 @@ public class MyPanel extends JPanel implements ActionListener {
     private JTextField fieldTimeBetweenLogwrite;
     private Core core;
     private Thread thread;
+    private boolean firstExecution;
     
     public MyPanel() {
         //construct components
@@ -123,7 +124,7 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldTIMES_TO_TRY.setText ("30");
         
         core = new Core();
-        thread = new Thread(core);
+        firstExecution = true;
     }
     
     // metodo de ouvinte, para tratar os eventos gerados ao clicar um botao
@@ -159,8 +160,13 @@ public class MyPanel extends JPanel implements ActionListener {
             
             fieldTIMES_TO_TRY.setEnabled (false);
             core.setTIMES_TO_TRY(Integer.parseInt(fieldTIMES_TO_TRY.getText()));
-
-            thread.start();
+            
+            core.start();
+            thread = new Thread(core);
+            if(firstExecution)
+            {
+               thread.start(); 
+            }
         }
         else
         {
@@ -194,7 +200,6 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldTIMES_TO_TRY.setText(Integer.toString(core.getTIMES_TO_TRY()));
             
             core.stop();
-            thread.interrupt();
         }
     }
    
