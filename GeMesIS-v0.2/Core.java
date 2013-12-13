@@ -17,22 +17,23 @@ public class Core implements Runnable
     // Intervalo de tempo que tentará realizar uma medida
     private volatile int TIME_BETWEEN_MESUREMENT = 2000;
     // Tempo de espera até a proxima medida em caso de falha
-    private volatile int WAITING_TIME_AFTER_FAILURE = 30000;
+    private volatile int WAITING_TIME_AFTER_FAILURE = 100;
     // Tempo de espera depois de um numero grande de falhas LARGE_NUMBER_OF_FAILURES
-    private volatile int WAITING_TIME_AFTER_LOTS_FAILURE = 180000;
+    private volatile int WAITING_TIME_AFTER_LOTS_FAILURE = 400;
     // Numero grande de falhas
-    private volatile int LARGE_NUMBER_FAILURES = 40;
+    private volatile int LARGE_NUMBER_FAILURES = 20;
     // Tempo de espera entre gravaçoes bem sucedidas no Datalog
     private volatile int TIME_BETWEEN_LOGWRITE = 180000;
-    
+    // Numero de tentativas de re-achar o sol
+    private volatile int TIMES_TO_TRY = 30;
     
     // Motores
     // Limite de passos na horizontal
-    private volatile int LIMIT_AZIMUTH = 48;
+    private volatile int LIMIT_AZIMUTH = 24;
     // Limite de passos na vertical
-    private volatile int LIMIT_ZENITH = 48;
+    private volatile int LIMIT_ZENITH = 24;
     // Tempo de espera entre cada comando para os motores em MILLISECONDS
-    private volatile int TIME_WAITING_ENGINE = 100;
+    private volatile int TIME_WAITING_ENGINE = 1;
     
     //Sensores
     //Os sensores seguem esse formato
@@ -66,6 +67,8 @@ public class Core implements Runnable
     {
         //Informa se o sol foi encontrado ou não
         sunLocated = false;
+        failuresCounter = 0;
+        sunTraked = false;
         gps = new Coordinates();
         //Interrompe o laço do start e para todo o programa
         isOn = false;
@@ -85,9 +88,6 @@ public class Core implements Runnable
         //Posição que o sol foi "encontrado" da ultima vez
         lastSunPosition = new Position(0,0);
         //contador de falhas
-        failuresCounter = 0;
-        
-        sunTraked = false;
         System.out.println("Core has been created!");
     }
     
@@ -100,7 +100,8 @@ public class Core implements Runnable
         System.out.println("Start Core!");
         while(isOn)
         {
-            if(!sunLocated)
+            //primeira execução, ou perdeu e nao re-achou
+            if(!sunLocated && !sunTraked)
             {
                 //procura o sol em todo ceu
                 sunLocated = lookForSun();
@@ -111,11 +112,23 @@ public class Core implements Runnable
                     System.out.println("Sun was not located!");
                 }
             }
-            else
+            //caso o sol tenha sido achado, tenta rastrear
+            else if (sunLocated)
             {
                 //rastreia  o sol depois de o ter achado
-                System.out.println("Sun was located! - Start Traking");
+                if(!sunTraked)
+                {
+                    System.out.println("Sun was located! - Start Traking");
+                }
                 sunLocated = startTrackSun();
+                sunTraked = true;
+            }
+            ///caso o sol tenha sido perdio tenta re-achar
+            else if (!sunLocated && sunTraked)
+            {
+                System.out.println("Sun has been lost - Trying to find it again...");
+                sunLocated = findItAgain();
+                sunTraked = false;
             }
         }
     }
@@ -125,7 +138,7 @@ public class Core implements Runnable
      */
     public void stop()
     {
-        //isOn = false;
+        isOn = false;
     }
     
     /**
@@ -165,83 +178,126 @@ public class Core implements Runnable
     public boolean startTrackSun()
     {
         //declara o sol como perdido e tenta rastrear e apontar o sensor central
-        boolean foundIt = false;
+        boolean foundIt;
         ArrayList<Integer> sV = new ArrayList<Integer>();
-        for(int i = 0; i < N_SENSORS; i++)
+        int tried = 0;
+        do
         {
-            sV.add(i, sensors.get(i).getMeasurement());
-            //System.out.println(sensorsValues.get(i));
-        }
-        if(sV.get(5) < sV.get(4) && sV.get(5) < sV.get(3) && sV.get(5) < sV.get(2) && sV.get(5) < sV.get(1))
-        {
-            if(sV.get(5) < sV.get(0) - CLOUD_DIFFERENCE)
+            foundIt = false;
+            for(int i = 0; i < N_SENSORS; i++)
             {
-                //seta a posição do sol que foi encontrado
-                setSunPosition();
-                //declara o sol como achado
-                foundIt = true;
-                failuresCounter = 0;
-                System.out.println("Sun was located! - Start Traking");
+                sV.add(i, sensors.get(i).getMeasurement());
+                //System.out.println(sensorsValues.get(i));
             }
-            else
+            //se o sensor do meio for maior faz a medida caso não tenha novem na frente
+            if(sV.get(5) < sV.get(4) && sV.get(5) < sV.get(3) && sV.get(5) < sV.get(2) && sV.get(5) < sV.get(1))
             {
-                failure();
+                if(sV.get(5) < sV.get(0) - CLOUD_DIFFERENCE)
+                {
+                    //seta a posição do sol que foi encontrado
+                    setSunPosition();
+                    //declara o sol como achado
+                    foundIt = true;
+                    failuresCounter = 0;
+                    System.out.println("Sun was located! - Start Traking");
+                }
+                else
+                {
+                    failure();
+                }
             }
-        }
-        else if(sV.get(1) < sV.get(2) && sV.get(1) < sV.get(3) && sV.get(1) < sV.get(4) && sV.get(1) < sV.get(5))
-        {
-            if(sV.get(1) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goDown();
-            else if(sV.get(1) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goClock();
-            else
+            //
+            else if(sV.get(1) < sV.get(2) && sV.get(1) < sV.get(3) && sV.get(1) < sV.get(4) && sV.get(1) < sV.get(5))
             {
-                goDown();
-                goClock();
+                if(sV.get(1) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goDown();
+                else if(sV.get(1) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goClock();
+                else
+                {
+                    goDown();
+                    goClock();
+                }
             }
-        }
-        else if(sV.get(2) < sV.get(1) && sV.get(2) < sV.get(3) && sV.get(2) < sV.get(4) && sV.get(2) < sV.get(5))
-        {
-            if(sV.get(2) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goDown();
-            else if(sV.get(2) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goCounter();
-            else
+            else if(sV.get(2) < sV.get(1) && sV.get(2) < sV.get(3) && sV.get(2) < sV.get(4) && sV.get(2) < sV.get(5))
             {
-                goDown();
-                goCounter();
+                if(sV.get(2) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goDown();
+                else if(sV.get(2) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goCounter();
+                else
+                {
+                    goDown();
+                    goCounter();
+                }
             }
-        }
-        else if(sV.get(3) < sV.get(1) && sV.get(3) < sV.get(2) && sV.get(3) < sV.get(4) && sV.get(3) < sV.get(5))
-        {
-            if(sV.get(3) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goCounter();
-            else if(sV.get(3) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goUp();
-            else
+            else if(sV.get(3) < sV.get(1) && sV.get(3) < sV.get(2) && sV.get(3) < sV.get(4) && sV.get(3) < sV.get(5))
             {
-                goUp();
-                goCounter();
+                if(sV.get(3) >= sV.get(2) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goCounter();
+                else if(sV.get(3) >= sV.get(4) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goUp();
+                else
+                {
+                    goUp();
+                    goCounter();
+                }
             }
-        }
-        else if(sV.get(4) < sV.get(1) && sV.get(4) < sV.get(2) && sV.get(4) < sV.get(3) && sV.get(4) < sV.get(5))
-        {
-            if(sV.get(4) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goClock();
-            else if(sV.get(4) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
-                goUp();
-            else
+            else if(sV.get(4) < sV.get(1) && sV.get(4) < sV.get(2) && sV.get(4) < sV.get(3) && sV.get(4) < sV.get(5))
             {
-                goUp();
-                goClock();
+                if(sV.get(4) >= sV.get(1) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goClock();
+                else if(sV.get(4) >= sV.get(3) - LOW_DIFFERENCE_BETWEEN_SENSORS)
+                    goUp();
+                else
+                {
+                    goUp();
+                    goClock();
+                }
             }
-        }
+            tried++;
+        } while(!foundIt || tried <= TIMES_TO_TRY);
         //retorna o que será recebido por sunLocated
-        return (foundIt);
+        return foundIt;
+    }
+    
+    private boolean findItAgain()
+    {
+        boolean foundIt = false;
+        int time = 0;
+        //procura o sol perto do ponto onde ele foi perdido
+        do
+        {
+            //faz um caracol tentando achar o sol, caso ache para
+            for(int i = 0; i < time && !foundIt; i++)
+            {
+                goUp();
+                foundIt = checkSensorFoundSun();
+            }
+            for(int i = 0; i < time && !foundIt; i++)
+            {
+                goClock();
+                foundIt = checkSensorFoundSun();
+            }
+            for(int i = 0; i < (time * 2) && !foundIt; i++)
+            {
+                goDown();
+                foundIt = checkSensorFoundSun();
+            }
+            for(int i = 0; i < time*2 && !foundIt; i++)
+            {
+                goCounter();
+                foundIt = checkSensorFoundSun();
+            }
+            //sai do laço se achar o sol, ou se tentou muito
+            time++;
+        } while(!foundIt || (TIMES_TO_TRY/4) > time);
+        
+        return foundIt;
     }
     
     //Método para mover as engines com só um comando e esperar o tempo necessario de cada passo.
-    private void goTo(int azimuth, int zenith)
+    public void goTo(int azimuth, int zenith)
     {
         //calcula a quantidade de passos que vai dar
         azimuth = azimuth - engineA.getPosition();
@@ -350,7 +406,7 @@ public class Core implements Runnable
      */
     public boolean isTracking()
     {
-        return true;
+        return sunTraked;
     }
     
     /**
@@ -359,13 +415,5 @@ public class Core implements Runnable
     public void colectData()
     {
         
-    }
-    
-    /**
-     * 
-     */
-    public void cyclincRun()
-    {
-    
     }
 }
