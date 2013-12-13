@@ -26,6 +26,8 @@ public class MyPanel extends JPanel implements ActionListener {
     private JTextField fieldWAITING_TIME_AFTER_FAILURE;
     private JTextField fieldTimeBetweenLogwrite;
     private Core core;
+    private Thread thread;
+    
     public MyPanel() {
         //construct components
         console = new JTextArea (20, 20);
@@ -109,8 +111,6 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldTIMES_TO_TRY.setBounds (15, 495, 200, 25);
 
         
-        Thread core = new Thread(new Core());
-        core.start();
         title.setFont(new Font("Serif", Font.PLAIN, 34));
         fieldWAITING_TIME_AFTER_FAILURE.setText ("30000");
         fieldTIME_BETWEEN_MESUREMENT.setText ("2000");
@@ -121,6 +121,9 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldCLOUD_DIFFERENCE.setText ("200");
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setText ("30");
         fieldTIMES_TO_TRY.setText ("30");
+        
+        core = new Core();
+        thread = new Thread(core);
     }
     
     // metodo de ouvinte, para tratar os eventos gerados ao clicar um botao
@@ -131,16 +134,33 @@ public class MyPanel extends JPanel implements ActionListener {
         {
             onOff.setText("ON");
             fieldWAITING_TIME_AFTER_LOTS_FAILURE.setEnabled (false);
+            core.setWAITING_TIME_AFTER_LOTS_FAILURE(Integer.parseInt(fieldWAITING_TIME_AFTER_LOTS_FAILURE.getText()));
+            
             fieldWAITING_TIME_AFTER_FAILURE.setEnabled (false);
+            core.setWAITING_TIME_AFTER_FAILURE(Integer.parseInt(fieldWAITING_TIME_AFTER_FAILURE.getText()));
+            
             fieldTIME_BETWEEN_MESUREMENT.setEnabled (false);
+            core.setTIME_BETWEEN_MESUREMENT(Integer.parseInt(fieldTIME_BETWEEN_MESUREMENT.getText()));
+            
             fieldTimeBetweenLogwrite.setEnabled (false);
+            core.setTIME_BETWEEN_LOGWRITE(Integer.parseInt(fieldTimeBetweenLogwrite.getText()));
+            
             fieldLARGE_NUMBER_FAILURES.setEnabled (false);
+            core.setLARGE_NUMBER_FAILURES(Integer.parseInt(fieldLARGE_NUMBER_FAILURES.getText()));
+            
             fieldSUN_INTENSITY.setEnabled (false);
+            core.setSUN_INTENSITY(Integer.parseInt(fieldSUN_INTENSITY.getText()));
+            
             fieldCLOUD_DIFFERENCE.setEnabled (false);
+            core.setCLOUD_DIFFERENCE(Integer.parseInt(fieldCLOUD_DIFFERENCE.getText()));
+            
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (false);
+            core.setLOW_DIFFERENCE_BETWEEN_SENSORS(Integer.parseInt(fieldLOW_DIFFERENCE_BETWEEN_SENSORS.getText()));
+            
             fieldTIMES_TO_TRY.setEnabled (false);
-            System.out.println(fieldLOW_DIFFERENCE_BETWEEN_SENSORS.getText());
-            core.run();
+            core.setTIMES_TO_TRY(Integer.parseInt(fieldTIMES_TO_TRY.getText()));
+
+            thread.start();
         }
         else
         {
@@ -155,6 +175,7 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (true);
             fieldTIMES_TO_TRY.setEnabled (true);
             core.stop();
+            thread.interrupt();
         }
     }
    
