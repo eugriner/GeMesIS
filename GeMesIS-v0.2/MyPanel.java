@@ -6,6 +6,7 @@ import javax.swing.event.*;
 public class MyPanel extends JPanel implements ActionListener {
     private JTextArea console;
     private JToggleButton onOff;
+    private JLabel title;
     private JLabel labelTIME_BETWEEN_MESUREMENT;
     private JLabel labelWAITING_TIME_AFTER_FAILURE;
     private JLabel labelTimeBetweenLogwrite;
@@ -14,6 +15,8 @@ public class MyPanel extends JPanel implements ActionListener {
     private JLabel labelSUN_INTENSITY;
     private JLabel labelCLOUD_DIFFERENCE;
     private JLabel labelLOW_DIFFERENCE_BETWEEN_SENSORS;
+    private JLabel labelTIMES_TO_TRY;
+    private JTextField fieldTIMES_TO_TRY;
     private JTextField fieldLOW_DIFFERENCE_BETWEEN_SENSORS;
     private JTextField fieldCLOUD_DIFFERENCE;
     private JTextField fieldSUN_INTENSITY;
@@ -27,6 +30,7 @@ public class MyPanel extends JPanel implements ActionListener {
         //construct components
         console = new JTextArea (20, 20);
         onOff = new JToggleButton ("OFF", false);
+        title = new JLabel ("ARAM - Monitor de intensidade solar");
         labelTIME_BETWEEN_MESUREMENT = new JLabel ("Time Between Mesurement");
         fieldTIME_BETWEEN_MESUREMENT = new JTextField (25);
         labelWAITING_TIME_AFTER_FAILURE = new JLabel ("Waiting Time After Failure");
@@ -43,6 +47,9 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldCLOUD_DIFFERENCE = new JTextField (25);
         labelLOW_DIFFERENCE_BETWEEN_SENSORS = new JLabel ("Low Difference Between sensors");
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS = new JTextField (25);
+        labelTIMES_TO_TRY = new JLabel ("Times To Try");
+        fieldTIMES_TO_TRY = new JTextField (25);
+        
 
         //set components properties
         console.setEnabled (false);
@@ -55,6 +62,7 @@ public class MyPanel extends JPanel implements ActionListener {
         //add components
         add (console);
         add (onOff);
+        add (title);
         onOff.addActionListener(this);
         add (labelTIME_BETWEEN_MESUREMENT);
         add (fieldTIME_BETWEEN_MESUREMENT);
@@ -72,12 +80,15 @@ public class MyPanel extends JPanel implements ActionListener {
         add (fieldCLOUD_DIFFERENCE);
         add (labelLOW_DIFFERENCE_BETWEEN_SENSORS);
         add (fieldLOW_DIFFERENCE_BETWEEN_SENSORS);
+        add (labelTIMES_TO_TRY);
+        add (fieldTIMES_TO_TRY);
 
         
         
         //set component bounds (only needed by Absolute Positioning)
-        console.setBounds (250, 50, 520, 415);
-        onOff.setBounds (15, 10, 200, 25);
+        console.setBounds (250, 90, 520, 415);
+        onOff.setBounds (15, 20, 200, 35);
+        title.setBounds (250, 20, 600, 45);
         labelTIME_BETWEEN_MESUREMENT.setBounds (20, 170, 200, 25);
         fieldTIME_BETWEEN_MESUREMENT.setBounds (15, 190, 200, 25);
         labelWAITING_TIME_AFTER_FAILURE.setBounds (20, 225, 200, 25);
@@ -94,10 +105,13 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldCLOUD_DIFFERENCE.setBounds (15, 395, 200, 25);
         labelLOW_DIFFERENCE_BETWEEN_SENSORS.setBounds (20, 425, 200, 25);
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setBounds (15, 450, 200, 25);
+        labelTIMES_TO_TRY.setBounds (20, 475, 200, 25);
+        fieldTIMES_TO_TRY.setBounds (15, 495, 200, 25);
 
         
         Thread core = new Thread(new Core());
         core.start();
+        title.setFont(new Font("Serif", Font.PLAIN, 34));
         fieldWAITING_TIME_AFTER_FAILURE.setText ("30000");
         fieldTIME_BETWEEN_MESUREMENT.setText ("2000");
         fieldTimeBetweenLogwrite.setText ("180000");
@@ -106,6 +120,7 @@ public class MyPanel extends JPanel implements ActionListener {
         fieldSUN_INTENSITY.setText ("100");
         fieldCLOUD_DIFFERENCE.setText ("200");
         fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setText ("30");
+        fieldTIMES_TO_TRY.setText ("30");
     }
     
     // metodo de ouvinte, para tratar os eventos gerados ao clicar um botao
@@ -123,6 +138,7 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldSUN_INTENSITY.setEnabled (false);
             fieldCLOUD_DIFFERENCE.setEnabled (false);
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (false);
+            fieldTIMES_TO_TRY.setEnabled (false);
             System.out.println(fieldLOW_DIFFERENCE_BETWEEN_SENSORS.getText());
             core.run();
         }
@@ -137,6 +153,7 @@ public class MyPanel extends JPanel implements ActionListener {
             fieldSUN_INTENSITY.setEnabled (true);
             fieldCLOUD_DIFFERENCE.setEnabled (true);
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (true);
+            fieldTIMES_TO_TRY.setEnabled (true);
             core.stop();
         }
     }
