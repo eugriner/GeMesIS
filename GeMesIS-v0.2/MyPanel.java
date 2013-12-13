@@ -166,14 +166,33 @@ public class MyPanel extends JPanel implements ActionListener {
         {
             onOff.setText("OFF");
             fieldWAITING_TIME_AFTER_LOTS_FAILURE.setEnabled (true);
+            fieldWAITING_TIME_AFTER_LOTS_FAILURE.setText(Integer.toString(core.getWAITING_TIME_AFTER_LOTS_FAILURE()));
+            
             fieldWAITING_TIME_AFTER_FAILURE.setEnabled (true);
+            fieldWAITING_TIME_AFTER_FAILURE.setText(Integer.toString(core.getWAITING_TIME_AFTER_FAILURE()));
+            
             fieldTIME_BETWEEN_MESUREMENT.setEnabled (true);
+            fieldTIME_BETWEEN_MESUREMENT.setText(Integer.toString(core.getTIME_BETWEEN_MESUREMENT()));
+            
             fieldTimeBetweenLogwrite.setEnabled (true);
+            fieldTimeBetweenLogwrite.setText(Integer.toString(core.getTIME_BETWEEN_LOGWRITE()));
+            
             fieldLARGE_NUMBER_FAILURES.setEnabled (true);
+            fieldLARGE_NUMBER_FAILURES.setText(Integer.toString(core.getLARGE_NUMBER_FAILURES()));
+            
             fieldSUN_INTENSITY.setEnabled (true);
+            fieldSUN_INTENSITY.setText(Integer.toString(core.getSUN_INTENSITY()));
+            
             fieldCLOUD_DIFFERENCE.setEnabled (true);
+            fieldCLOUD_DIFFERENCE.setText(Integer.toString(core.getCLOUD_DIFFERENCE()));
+            
+            
             fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setEnabled (true);
+            fieldLOW_DIFFERENCE_BETWEEN_SENSORS.setText(Integer.toString(core.getLOW_DIFFERENCE_BETWEEN_SENSORS()));
+            
             fieldTIMES_TO_TRY.setEnabled (true);
+            fieldTIMES_TO_TRY.setText(Integer.toString(core.getTIMES_TO_TRY()));
+            
             core.stop();
             thread.interrupt();
         }
